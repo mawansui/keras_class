@@ -1,0 +1,1 @@
+Docs for this class will appear here in a while, stay tuned.
