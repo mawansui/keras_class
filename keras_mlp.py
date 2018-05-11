@@ -4,20 +4,21 @@ from keras import optimizers, regularizers
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Activation, Dropout
 from keras.callbacks import EarlyStopping
-import pickle
 from get_optimizer import get_optimizer
 import os.path
 # импортируем список всех возможных опций
 from choose_parameters import options
+# функция, которая подбирает количество и параметры слоёв дропаута в зависимости
+# от того, что передано при инициализации класса
 from define_dropout import define_dropout
 
 class Keras_MLP():
     def __init__(self,
-                 task, # ввод названия задачи - - - - - - - - - - - - - - - - - 
-                 layer_sizes, # только скрытые слои - - - - - - - - - - - - - - 
+                 task, # название задачи 
+                 layer_sizes, # котреж скрытых слоёв
                  activations, 
                  dropout, # указываем, нужен ли дропаут и если да, то сколько -
-                 # дропаут должен идти после каждого скрытого слоя 
+                 # дропаут слой идёт после каждого скрытого слоя 
                  alpha, 
                  batch_size, 
                  learning_rate_init, 
@@ -29,7 +30,7 @@ class Keras_MLP():
                  early_stopping,
                  optimizer_name,
                  **kwargs):
-        self.task = task # ввод названия задачи - - - - - - - - - - - - - - - - 
+        self.task = task # ввод названия задачи
         self.layer_sizes = layer_sizes
         self.activations = activations
         self.dropout = dropout
@@ -40,7 +41,7 @@ class Keras_MLP():
         self.epochs = epochs
         self.shuffle = shuffle
         self.loss_function = loss_function
-        self.metrics = metrics # = = = = = = = = = = = = = = = = = = = = = = = =
+        self.metrics = metrics
         self.verbose = verbose
         self.early_stopping = early_stopping
         self.optimizer_name = optimizer_name
@@ -71,17 +72,6 @@ class Keras_MLP():
         x_train_shape = int(x_train.shape[1])
         y_train_shape = int(y_train.shape[1])
 
-        # Проверяем, верно ли задан размер последнего слоя, переданный при
-        # инициализации класса, потому что он не может быть меньше y_train_shape
-        # if self.layer_sizes[-1] != y_train_shape:
-        #     print('Error building the network ( in keras_mlp.fit() ). '
-        #           'Number of neurons in the last layer should be equal to '
-        #           'y_train_shape.\n'
-        #           'Ошибка при создании сети ( в keras_mlp.fit() ).'
-        #           'Число нейронов в последнем слое нейросети должно равняться '
-        #           'y_train_shape')
-        # else:
-
         # возращает массив с параметрами для дропаута (может быть None, though!)
         used_dropout = define_dropout(self.dropout, self.layer_sizes)
         indices = [i for i in range(0, len(self.layer_sizes))]
@@ -106,34 +96,6 @@ class Keras_MLP():
         model.add(Dense(y_train_shape, 
                   kernel_regularizer=regularizers.l2(self.alpha)))
         model.add(Activation(chosen_task[0]))
-
-
-
-        # если размер верный, то создать слой с заданным числом нейронов
-        # и после него добавить заданную активацию;
-        # а если этот слой – первый, заодно уточнить размер входящих данных
-            # for index, layer_size in enumerate(self.layer_sizes):
-            #     if index == 0:
-            #         # если первый слой, то добавить нейроны и активатор
-            #         model.add(Dense(layer_size, 
-            #                         input_dim=x_train_shape,
-            #                         kernel_regularizer=regularizers.l2(self.alpha)))
-            #         model.add(Activation(self.activations[index]))
-            #     elif index == len(layer_sizes)-1:
-            #         # если последний слой, добавить нейроны и активатор, 
-            #         # соответствующий задаче - - - - - - - - - - - - - - - - - -
-            #         model.add(Dense(layer_size,
-            #                         kernel_regularizer=regularizers.l2(self.alpha)))
-            #         # добавляем активатор для выбранной задачи
-            #         model.add(Activation(chosen_task[0]))
-            #     else:
-            #         # если не первый и не последний, добавить нейроны и активатор
-            #         model.add(Dense(layer_size,
-            #                         kernel_regularizer=regularizers.l2(self.alpha)))
-            #         model.add(Activation(self.activations[index]))
-
-            # Оптимизатор – функция, изменяющая веса связей между нейронами;
-            # в sk-learn называется solver
 
         chosen_optimizer = None 
 
@@ -162,15 +124,6 @@ class Keras_MLP():
 
         chosen_optimizer = get_optimizer(self.optimizer_name, self.__dict__)
         
-
-        # loss function – это то, что изменяется во время обучения (???)
-        # metrics - показывает качество обучения сети, сравнивания 
-        # предсказанные и верные значения
-
-
-        # loss – функция ошибки; здесь нужен F2-score?
-        # наверное, придется сделать custom metric (https://keras.io/metrics/)
-        # metrics! нужны разные; добавить стандартные
         model.compile(loss=chosen_task[1], # функция ошибки под задачу - - -
                       optimizer=chosen_optimizer,
                       metrics=chosen_task[2]) # метрика под задачу - - - - -
@@ -190,9 +143,6 @@ class Keras_MLP():
         # Нужно для большей совместимости с прежним кодом
         if self.batch_size == "auto":
             self.batch_size = 200
-
-        # Возможно пригодится; тоже нашел на гитхабе где-то в обсуждениях. 
-        # new_y_train = keras.utils.np_utils.to_categorical()
 
         model.fit(x_train, 
                   y_train,
