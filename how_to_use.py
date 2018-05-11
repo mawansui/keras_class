@@ -36,8 +36,8 @@ from keras_mlp import Keras_MLP
 # выбранного оптимизатора, согласно документации Keras (https://keras.io/optimizers/)
 
 classifier = Keras_MLP(
-				task="classification",
-				layer_sizes=(100, 100, 100),
+                task="classification",
+		layer_sizes=(100, 100, 100),
                 activations = ['relu', 'relu', 'relu'],
                 dropout="Auto",
                 alpha=0.00001*(2**1),
@@ -75,4 +75,7 @@ predicted_y = trained_model.predict(x_test_data)
 #    сделано
 # 2. Убрать явное присвоение loss_function и metrics при объявлении класса
 # 3. Добавить возможность выбирать, сохранять ли модель и если да, то под каким
-#	 именем
+#    именем
+# 4. Сохранение недообученной модели (partial_fit) в оперативной памяти, без
+#    записи на диск.
+# 5. Проверка моделью типа входных данных, преобразование их к numpy-массивам
