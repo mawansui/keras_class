@@ -4,13 +4,13 @@ from keras import optimizers, regularizers
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Activation, Dropout
 from keras.callbacks import EarlyStopping
-from get_optimizer import get_optimizer
+from helpers.get_optimizer import get_optimizer
 import os.path
 # импортируем список всех возможных опций
-from choose_parameters import options
+from helpers.choose_parameters import options
 # функция, которая подбирает количество и параметры слоёв дропаута в зависимости
 # от того, что передано при инициализации класса
-from define_dropout import define_dropout
+from helpers.define_dropout import define_dropout
 
 class Keras_MLP():
     def __init__(self,
