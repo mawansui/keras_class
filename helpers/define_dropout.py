@@ -5,11 +5,11 @@ def define_dropout(passed_do_value, layer_sizes):
 	used_dropout = []
 	how_many_layers = len(layer_sizes)
 
-	if passed_do_value == "Auto":
+	if passed_do_value.lower() == "auto":
 	    constant_dropout_value = 0.5
 	    for i in range(0, how_many_layers):
 	    	used_dropout.append(constant_dropout_value)
-	    print("how many layers: {}".format(how_many_layers))
+	    # print("how many layers: {}".format(how_many_layers))
 	    # used_dropout * 3 # или не надо минус 1?
 
 	elif isinstance(passed_do_value, list) and len(passed_do_value) == 1:
@@ -23,14 +23,11 @@ def define_dropout(passed_do_value, layer_sizes):
 		print("Execution failed: incorrect number of dropout layers.\n"
 			"Layers: {}, dropouts: {} (should be {})".format(len(layer_sizes), len(passed_do_value), len(layer_sizes)))
 		used_dropout = None
+		raise ValueError("Incorrect number of dropout layers.\nLayers: {}, dropouts: {} (should be {})".format(len(layer_sizes), len(passed_do_value), len(layer_sizes)))
 
 	else:
 		print("Undefined value: {}".format(passed_do_value))
 		used_dropout = None
+		raise ValueError("Undefined value passed to define_dropout function: {}".format(passed_do_value))
 
 	return used_dropout
-
-
-used = define_dropout("Auto", (10, 10, 10, ))
-print("used values:")
-print(used)

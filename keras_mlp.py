@@ -11,6 +11,8 @@ from helpers.choose_parameters import options
 # функция, которая подбирает количество и параметры слоёв дропаута в зависимости
 # от того, что передано при инициализации класса
 from helpers.define_dropout import define_dropout
+# внешняя функция, которая подбирает количество функций активации
+from helpers.define_activations import define_activations
 
 class Keras_MLP():
     def __init__(self,
@@ -24,8 +26,6 @@ class Keras_MLP():
                  learning_rate_init, 
                  epochs,
                  shuffle,
-                 loss_function, 
-                 metrics, 
                  verbose, 
                  early_stopping,
                  optimizer_name,
@@ -33,6 +33,7 @@ class Keras_MLP():
         self.task = task # ввод названия задачи
         self.layer_sizes = layer_sizes
         self.activations = activations
+        # activations может быть "Auto", "relu", ["relu", "relu"]
         self.dropout = dropout
         # dropout может быть строкой ("Auto"), массивом с 1 числом или несколькими
         self.alpha = alpha
@@ -40,8 +41,6 @@ class Keras_MLP():
         self.learning_rate_init = learning_rate_init
         self.epochs = epochs
         self.shuffle = shuffle
-        self.loss_function = loss_function
-        self.metrics = metrics
         self.verbose = verbose
         self.early_stopping = early_stopping
         self.optimizer_name = optimizer_name
@@ -74,19 +73,20 @@ class Keras_MLP():
 
         # возращает массив с параметрами для дропаута (может быть None, though!)
         used_dropout = define_dropout(self.dropout, self.layer_sizes)
+        used_activations = define_activations(self.activations, self.layer_sizes)
         indices = [i for i in range(0, len(self.layer_sizes))]
 
-        for index, layer_size, dropout in zip(indices, self.layer_sizes, used_dropout):
+        for index, layer_size, dropout, activation in zip(indices, self.layer_sizes, used_dropout, used_activations):
             if index == 0:
                 model.add(Dense(layer_size, 
                                 input_dim=x_train_shape,
                                 kernel_regularizer=regularizers.l2(self.alpha)))
-                model.add(Activation(self.activations[index]))
+                model.add(Activation(activation))
                 model.add(Dropout(dropout))
             else:
                 model.add(Dense(layer_size, 
                                 kernel_regularizer=regularizers.l2(self.alpha)))
-                model.add(Activation(self.activations[index]))
+                model.add(Activation(activation))
                 model.add(Dropout(dropout))
 
 
