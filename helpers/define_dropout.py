@@ -5,7 +5,7 @@ def define_dropout(passed_do_value, layer_sizes):
 	used_dropout = []
 	how_many_layers = len(layer_sizes)
 
-	if passed_do_value.lower() == "auto":
+	if isinstance(passed_do_value, str) and passed_do_value.lower() == "auto":
 	    constant_dropout_value = 0.5
 	    for i in range(0, how_many_layers):
 	    	used_dropout.append(constant_dropout_value)

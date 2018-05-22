@@ -38,8 +38,8 @@ from keras_mlp import Keras_MLP
 classifier = Keras_MLP(
                 task="classification",
 		layer_sizes=(100, 100, 100),
-                activations = ['relu', 'relu', 'relu'],
-                dropout="Auto",
+                activations = ['relu'],
+                dropout=[0],
                 alpha=0.00001*(2**1),
                 batch_size=200,
                 learning_rate_init=0.001,
