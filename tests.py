@@ -5,7 +5,12 @@
 
 # Шаг 1. Импортировать класс:
 
+import keras
 from keras_mlp import Keras_MLP
+import numpy as np
+
+x_train = np.random.random((1000, 20))
+y_train = keras.utils.to_categorical(np.random.randint(10, size=(1000, 1)), num_classes=10)
 
 # Шаг 2. Создать экземпляр класса.
 #
@@ -37,23 +42,24 @@ from keras_mlp import Keras_MLP
 
 classifier = Keras_MLP(
                 task="classification",
-		layer_sizes=(100, 100, 100),
-                activations = ['relu'],
-                dropout=[0],
+				layer_sizes=(100, 100, 100),
+                activations = 'relu',
+                dropout=[0.5, 0.5, 0.24],
                 alpha=0.00001*(2**1),
                 batch_size=200,
                 learning_rate_init=0.001,
                 epochs=15,
                 shuffle=True,
+                loss_function = "categorical_crossentropy",
+                metrics = ['binary_accuracy'],
+                random_stuff='hello',
                 verbose=1,
                 early_stopping=False,
                 optimizer_name="adam",
                 lr=0.001,
                 beta_1 = 0.9,
                 beta_2 = 0.999,
-                epsilon=1e-08,
-                loss_function = "categorical_crossentropy",
-                metrics = ['binary_accuracy'])
+                epsilon=1e-08)
 
 # Шаг 3. Выполнить метод fit() у этого класса. 
 #		 Метод принимает 2 параметра: 
@@ -62,7 +68,7 @@ classifier = Keras_MLP(
 # 	  	 Метод возвращает модель, поэтому нужно эту модель 
 #		 присвоить новой переменной:
 
-trained_model = classifier.fit(x_train_data, y_train_data)
+trained_model = classifier.fit(x_train, y_train)
 
 # Шаг 4. Выполнить метод predict(). Он принимает Numpy-массив тестовых данных.
 # 		 Возвращает Numpy-массив предсказанных лейблов.

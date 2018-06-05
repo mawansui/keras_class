@@ -123,10 +123,25 @@ class Keras_MLP():
         # вместо 5)
 
         chosen_optimizer = get_optimizer(self.optimizer_name, self.__dict__)
+
+        # Проверяем, указаны ли в **kwargs параметры loss_function и metrics,
+        # чтобы не привязываться к файлу choose_parameters.py
+
+        parameters_to_compile = []
+
+        if self.loss_function:
+        	parameters_to_compile.append(self.loss_function)
+        else:
+        	parameters_to_compile.append(chosen_task[1])
         
-        model.compile(loss=chosen_task[1], # функция ошибки под задачу - - -
+        if self.metrics:
+        	parameters_to_compile.append(self.metrics)
+        else:
+        	parameters_to_compile.append(chosen_task[2])
+        
+        model.compile(loss=parameters_to_compile[0], # функция ошибки под задачу - - -
                       optimizer=chosen_optimizer,
-                      metrics=chosen_task[2]) # метрика под задачу - - - - -
+                      metrics=parameters_to_compile[1]) # метрика под задачу - - - - -
         
         print("Model Summary:\n\n")
         model.summary()
