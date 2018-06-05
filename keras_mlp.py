@@ -1,26 +1,25 @@
 """ Класс для обучения нейросети на библиотеке Keras. """
 
-from keras import optimizers, regularizers
-from keras.models import Sequential, load_model
+from keras import regularizers
+from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout
 from keras.callbacks import EarlyStopping
 from helpers.get_optimizer import get_optimizer
-import os.path
 # импортируем список всех возможных опций
 from helpers.choose_parameters import options
 # функция, которая подбирает количество и параметры слоёв дропаута в зависимости
 # от того, что передано при инициализации класса
 from helpers.define_dropout import define_dropout
-# внешняя функция, которая подбирает количество функций активации
+# внешняя функция, которая подбирает количество функций активации в зависимости
+# от того, что передано при инициализации класса
 from helpers.define_activations import define_activations
 
 class Keras_MLP():
     def __init__(self,
-                 task, # название задачи 
-                 layer_sizes, # котреж скрытых слоёв
+                 task,
+                 layer_sizes,
                  activations, 
-                 dropout, # указываем, нужен ли дропаут и если да, то сколько -
-                 # дропаут слой идёт после каждого скрытого слоя 
+                 dropout,
                  alpha, 
                  batch_size, 
                  learning_rate_init, 
@@ -30,7 +29,7 @@ class Keras_MLP():
                  early_stopping,
                  optimizer_name,
                  **kwargs):
-        self.task = task # ввод названия задачи
+        self.task = task
         self.layer_sizes = layer_sizes
         self.activations = activations
         # activations может быть "Auto", "relu", ["relu", "relu"]
@@ -150,6 +149,7 @@ class Keras_MLP():
         # передаётся массив коллбэков.
 
         # То есть, коллбэки Keras принимает только в виде массива
+        # self. – чтобы иметь доступ к этой переменной вне класса
         self.used_callbacks = []
 
         # На тот случай, если вдруг понадобится поддержка EarlyStopping,
@@ -170,152 +170,25 @@ class Keras_MLP():
         print("\nCreated a clean untrained model with the following stats:\n")
         model.summary()
 
-        # model.fit(x_train, 
-        #           y_train,
-        #           batch_size = self.batch_size,
-        #           epochs = self.epochs,
-        #           verbose = self.verbose,
-        #           callbacks = used_callbacks,
-        #           shuffle = self.shuffle)
-
         return model
-
-
-
 
     def fit(self, x_train, y_train):
-        """
-            Принимает данные. 
-            Создаёт модель на основании параметров, переданных в __init__. 
-            Обучает модель.
-            Возвращает обученную модель.
-        """
+        # TODO: Delete this method
+        pass
 
-        try:
-            # массив. 1 – функция активации для последнего слоя, 2 - функция ошибки
-            chosen_task = options[self.task]
-        except Exception:
-            print("No such task found in choose_parameters.py. Reverting to default")
-            chosen_task = options["default"]
-
-        # Создаём пустую модель (шампур, на который потом будем нанизывать слои)
-        model = Sequential()
-
-        # Сохраняем shape переданных данных
-        # x_train_shape нужен для самого первого слоя (размерность вход. данных)
-        # y_train_shape нужен для последнего слоя (размерность выход. данных)
-        x_train_shape = int(x_train.shape[1])
-        y_train_shape = int(y_train.shape[1])
-
-        # возращает массив с параметрами для дропаута (может быть None, though!)
-        used_dropout = define_dropout(self.dropout, self.layer_sizes)
-        used_activations = define_activations(self.activations, self.layer_sizes)
-        indices = [i for i in range(0, len(self.layer_sizes))]
-
-        for index, layer_size, dropout, activation in zip(indices, self.layer_sizes, used_dropout, used_activations):
-            if index == 0:
-                model.add(Dense(layer_size, 
-                                input_dim=x_train_shape,
-                                kernel_regularizer=regularizers.l2(self.alpha)))
-                model.add(Activation(activation))
-                model.add(Dropout(dropout))
-            else:
-                model.add(Dense(layer_size, 
-                                kernel_regularizer=regularizers.l2(self.alpha)))
-                model.add(Activation(activation))
-                model.add(Dropout(dropout))
-
-
-        # отдельно после всего добавляем последний слой. Размер последнего слоя
-        # равен размерности y_train. К нему же добавляем активатор по выбранной 
-        # задаче
-        model.add(Dense(y_train_shape, 
-                  kernel_regularizer=regularizers.l2(self.alpha)))
-        model.add(Activation(chosen_task[0]))
-
-        chosen_optimizer = None 
-
-        # Возможны два пути:
-        #
-        # 1 путь. Собираем в один словарь все переменные класса
-        #         и передаём их в get_optimizer(), где kwargs.get()
-        #         всё равно среди этой кучи найдет нужные ей значения.
-        #
-        # 2 путь. Из всех переменных класса выделяем только последние
-        #         параметры (**kwargs), которые затем передаём в 
-        #         get_optimizer(), где kwargs.get() тоже будет искать
-        #         нужные ей параметры, но в гораздо меньшей куче
-        #
-        # Была проведена проверка скорости выполнения обоих вариантов
-        # с помощью стандартной функции timeit() на 10000 повторах.
-        # См. файл kwargs_get_speedtest.py для подробностей.
-        # 
-        # Результаты:
-        # - Словарь со всеми переменными класса:  155.58 сек
-        # - Словарь только с нужными переменными: 155.70 сек
-        # 
-        # Вывод: оба варианта эквивалентны, поэтому оставляю первый
-        # вариант как самый удобочитаемый и экономящий место (1 строка
-        # вместо 5)
-
-        chosen_optimizer = get_optimizer(self.optimizer_name, self.__dict__)
-
-        # Проверяем, указаны ли в **kwargs параметры loss_function и metrics,
-        # чтобы не привязываться к файлу choose_parameters.py
-
-        parameters_to_compile = []
-
-        if self.loss_function:
-        	parameters_to_compile.append(self.loss_function)
-        else:
-        	parameters_to_compile.append(chosen_task[1])
-        
-        if self.metrics:
-        	parameters_to_compile.append(self.metrics)
-        else:
-        	parameters_to_compile.append(chosen_task[2])
-        
-        model.compile(loss=parameters_to_compile[0], # функция ошибки под задачу - - -
-                      optimizer=chosen_optimizer,
-                      metrics=parameters_to_compile[1]) # метрика под задачу - - - - -
-        
-        print("Model Summary:\n\n")
-        model.summary()
-
-        # Так называемые колл-бэки Keras принимает только в виде массива
-        used_callbacks = []
-
-        # На тот случай, если вдруг понадобится поддержка EarlyStopping,
-        # код честно нашел где-то на гитхабе в обсуждениях.
-        if self.early_stopping == True:
-            early_stopping_callback = EarlyStopping(monitor="value_loss")
-            used_callbacks.append(early_stopping_callback)
-
-        # Нужно для большей совместимости с прежним кодом
-        if self.batch_size == "auto":
-            self.batch_size = 200
-
-        model.fit(x_train, 
-                  y_train,
-                  batch_size = self.batch_size,
-                  epochs = self.epochs,
-                  verbose = self.verbose,
-                  callbacks = used_callbacks,
-                  shuffle = self.shuffle)
-
-        return model
-    
-    def partial_fit(self, x_train, y_train):
-    	# метод для обучения сети в несколько заходов
-    	# если файл с обученной моделью уже существует,
-    	keras_model_filename="trained_keras_model.h5" # не надо хардкодить!
-    	if os.path.isfile(keras_model_filename):
-    		# загрузить его
-    		model = load_model(keras_model_filename)
-    		# дообучить модель
-    		model.fit(x_train, y_train)
-    		# сохранить модель
-    		model.save(keras_model_filename)
-    	else:
-    		model = self.fit(x_train, y_train)
-    		model.save(keras_model_filename)
+# Regarding pickling of the model:
+# 1. https://keras.io/getting-started/faq/#how-can-i-save-a-keras-model
+#    "...It is not recommended to use pickle or cPickle to save a Keras model."
+#
+# 2. https://github.com/keras-team/keras/issues/789
+#    "...this is not recommended and this is not guaranteed to work all the time"
+#
+#    В Model() нет протокольных функций консервирования __reduce_ex__ 
+#    и __setstate__
+#
+# 3. http://zachmoshe.com/2017/04/03/pickling-keras-models.html
+#    Костыль для разрешения консервирования
+#
+# Regarding partial fit
+# 1. https://github.com/keras-team/keras/issues/4446
+#    "...successive calls to fit will incrementally train the model"
