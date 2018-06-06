@@ -46,7 +46,7 @@ class Keras_MLP():
         for key, value in kwargs.items():
           setattr(self, key, value)
 
-    def create_model(self, x_train, y_train):
+    def create_model(self, x_train_shape, y_train_shape):
         """
             Метод принимает все параметры, переданные классу при инициализации,
             и создаёт новую пустую модель, на них основываясь.
@@ -61,7 +61,7 @@ class Keras_MLP():
             # массив. 1 – функция активации для последнего слоя, 2 - функция ошибки
             chosen_task = options[self.task]
         except Exception:
-            print("No such task found in choose_parameters.py. Reverting to default")
+            print("No such task ({}) found in choose_parameters.py. Reverting to default".format(self.task))
             chosen_task = options["default"]
 
         # Создаём пустую модель (шампур, на который потом будем нанизывать слои)
@@ -70,8 +70,8 @@ class Keras_MLP():
         # Сохраняем shape переданных данных
         # x_train_shape нужен для самого первого слоя (размерность вход. данных)
         # y_train_shape нужен для последнего слоя (размерность выход. данных)
-        x_train_shape = int(x_train.shape[1])
-        y_train_shape = int(y_train.shape[1])
+        x_train_shape = int(x_train_shape)
+        y_train_shape = int(y_train_shape)
 
         # Возращает массив с параметрами дропаута для каждого скрытого слоя
         used_dropout = define_dropout(self.dropout, self.layer_sizes)
@@ -128,18 +128,20 @@ class Keras_MLP():
         # добавить её в этот пустой массив parameters_to_compile[:],
         # а если нет, то использовать ту функцию, которая указана в файле
         # choose_parameters.py для выбранной при инициализации задачи (task)
-        if self.loss_function:
+
+        try:
             parameters_to_compile.append(self.loss_function)
-        else:
+        except Exception:
             parameters_to_compile.append(chosen_task[1])
         
         # Если при инициализации класса были указаны metrics (в виде массива!),
         # добавить их в этот пустой массив parameters_to_compile[:],
         # а если нет, то использовать тот массив, который указан в файле
         # choose_parameters.py для выбранной при инициализации задачи (task)
-        if self.metrics:
+
+        try:
             parameters_to_compile.append(self.metrics)
-        else:
+        except Exception:
             parameters_to_compile.append(chosen_task[2])
 
         # Из документации:
