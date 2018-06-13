@@ -158,7 +158,7 @@ class Keras_MLP():
         # код честно нашел где-то на гитхабе в обсуждениях.
         if self.early_stopping == True:
             early_stopping_callback = EarlyStopping(monitor="value_loss")
-            used_callbacks.append(early_stopping_callback)
+            self.used_callbacks.append(early_stopping_callback)
 
         # Нужно для большей совместимости с прежним кодом
         if self.batch_size == "auto":
